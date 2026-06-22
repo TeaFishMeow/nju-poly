@@ -18,9 +18,10 @@ missing=0
 check_command() {
   name="$1"
   command="$2"
+  version_command="${3:-$command --version}"
   if sh -c "command -v $command >/dev/null 2>&1"; then
     printf 'ok %s: ' "$name"
-    sh -c "$command --version 2>&1 | head -1" || true
+    sh -c "$version_command 2>&1 | head -1" || true
   else
     printf 'missing %s (%s)\n' "$name" "$command"
     missing=1
@@ -38,7 +39,7 @@ check_command "npm" "npm"
 check_command "pnpm" "pnpm"
 check_command "uv" "uv"
 check_command "psql" "psql"
-check_command "nginx" "nginx"
+check_command "nginx" "nginx" "nginx -v"
 
 if command -v uv >/dev/null 2>&1; then
   cd "$ROOT/apps/api"
