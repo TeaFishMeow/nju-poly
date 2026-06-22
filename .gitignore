@@ -10,6 +10,7 @@ node_modules/
 .pnpm-store/
 .tools/
 .cache/
+.vercel/
 .next/
 out/
 dist/
