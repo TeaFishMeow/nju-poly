@@ -77,7 +77,7 @@ Production deployment is documented in `DEPLOYMENT.md`. Goal 12 uses Vercel for
 the web app and a direct, no-Docker FastAPI process on the API server:
 
 - Web: `https://polymarket.exnju.top`
-- API: `https://api.polymarket.exnju.top`
+- Browser-facing API: `https://polymarket.exnju.top/api`
 
 Run the production smoke check after DNS and TLS are live:
 

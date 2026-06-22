@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm --filter @njupoly/web build",
+  "devCommand": "cd ../.. && pnpm --filter @njupoly/web dev",
+  "outputDirectory": ".next",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://47.98.51.247/njupoly-api/:path*"
+    }
+  ]
+}

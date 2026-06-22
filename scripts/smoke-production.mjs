@@ -1,7 +1,7 @@
 import { lookup } from "node:dns/promises";
 
 const webBaseUrl = process.env.NJUPOLY_WEB_URL ?? "https://polymarket.exnju.top";
-const apiBaseUrl = process.env.NJUPOLY_API_URL ?? "https://api.polymarket.exnju.top";
+const apiBaseUrl = process.env.NJUPOLY_API_URL ?? "https://polymarket.exnju.top/api";
 const webHost = new URL(webBaseUrl).hostname;
 const apiHost = new URL(apiBaseUrl).hostname;
 
