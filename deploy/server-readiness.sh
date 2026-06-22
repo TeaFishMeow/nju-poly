@@ -13,7 +13,11 @@ check() {
   else
     failed=1
     echo "fail"
-    sed 's/^/  /' /tmp/njupoly-readiness.out
+    if [ -s /tmp/njupoly-readiness.out ]; then
+      sed 's/^/  /' /tmp/njupoly-readiness.out
+    else
+      echo "  command exited nonzero without output"
+    fi
   fi
 }
 
@@ -25,7 +29,11 @@ check_optional() {
     echo "ok"
   else
     echo "warn"
-    sed 's/^/  /' /tmp/njupoly-readiness.out
+    if [ -s /tmp/njupoly-readiness.out ]; then
+      sed 's/^/  /' /tmp/njupoly-readiness.out
+    else
+      echo "  command exited nonzero without output"
+    fi
   fi
 }
 
