@@ -1,5 +1,9 @@
+import { lookup } from "node:dns/promises";
+
 const webBaseUrl = process.env.NJUPOLY_WEB_URL ?? "https://polymarket.exnju.top";
 const apiBaseUrl = process.env.NJUPOLY_API_URL ?? "https://api.polymarket.exnju.top";
+const webHost = new URL(webBaseUrl).hostname;
+const apiHost = new URL(apiBaseUrl).hostname;
 
 const checks = [
   { name: "web home", url: webBaseUrl },
@@ -11,8 +15,26 @@ const checks = [
 ];
 
 let failed = false;
+const dnsFailedHosts = new Set();
+
+for (const host of [...new Set([webHost, apiHost])]) {
+  try {
+    const records = await lookup(host, { all: true });
+    console.log(`ok dns ${host} ${records.map((record) => record.address).join(", ")}`);
+  } catch (error) {
+    failed = true;
+    dnsFailedHosts.add(host);
+    console.error(`fail dns ${host}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 for (const check of checks) {
+  const host = new URL(check.url).hostname;
+  if (dnsFailedHosts.has(host)) {
+    console.error(`skip ${check.name}: DNS failed for ${host}`);
+    continue;
+  }
+
   try {
     const response = await fetch(check.url, { redirect: "follow" });
     if (!response.ok) {
