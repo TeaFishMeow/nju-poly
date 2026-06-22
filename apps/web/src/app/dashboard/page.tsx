@@ -128,6 +128,10 @@ function slugify(input: string) {
     .slice(0, 80);
 }
 
+function confirmAction(message: string) {
+  return window.confirm(message);
+}
+
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const commonT = useTranslations("common");
@@ -257,12 +261,14 @@ export default function DashboardPage() {
 
   async function approveMarket(slug: string) {
     if (!token) return;
+    if (!confirmAction("Approve this event and publish it to the market list?")) return;
     await apiJson(`/markets/${slug}/approve`, { method: "POST", headers: authHeaders(token) });
     await loadDashboard(token);
   }
 
   async function rejectMarket(slug: string) {
     if (!token) return;
+    if (!confirmAction("Reject this submitted event?")) return;
     await apiJson(`/markets/${slug}/reject`, { method: "POST", headers: authHeaders(token) });
     await loadDashboard(token);
   }
@@ -280,18 +286,21 @@ export default function DashboardPage() {
 
   async function removeCategory(name: string) {
     if (!token) return;
+    if (!confirmAction(`Delete category "${name}"?`)) return;
     await apiJson(`/markets/categories/${encodeURIComponent(name)}`, { method: "DELETE", headers: authHeaders(token) });
     await loadCommon();
   }
 
   async function closeSelectedMarket() {
     if (!token || !settlementSlug) return;
+    if (!confirmAction("Close this market and stop new buys?")) return;
     await apiJson(`/markets/${settlementSlug}/close`, { method: "POST", headers: authHeaders(token) });
     await loadCommon();
   }
 
   async function proposeSelectedResult() {
     if (!token || !settlementSlug) return;
+    if (!confirmAction(`Propose ${settlementResult} as this market's result?`)) return;
     await apiJson(`/markets/${settlementSlug}/propose-result`, {
       method: "POST",
       headers: authHeaders(token),
@@ -302,13 +311,14 @@ export default function DashboardPage() {
 
   async function settleSelectedMarket() {
     if (!token || !settlementSlug) return;
+    if (!confirmAction("Settle this market and pay out the event pool?")) return;
     await apiJson(`/markets/${settlementSlug}/settle`, { method: "POST", headers: authHeaders(token) });
     await loadCommon();
   }
 
   async function deleteAndRefundSelectedMarket() {
     if (!token || !settlementSlug) return;
-    if (!window.confirm("Delete this event and refund all bought tokens?")) return;
+    if (!confirmAction("Delete this event and refund all bought tokens?")) return;
     await apiJson(`/markets/${settlementSlug}`, { method: "DELETE", headers: authHeaders(token) });
     setSettlementSlug("");
     await loadDashboard(token);
@@ -323,6 +333,7 @@ export default function DashboardPage() {
       setError(t("transferInvalid"));
       return;
     }
+    if (!confirmAction(`Transfer ${transferAmount} NWC to ${transferStudentId.trim()}?`)) return;
     try {
       await apiJson("/auth/transfers", {
         method: "POST",
@@ -357,6 +368,7 @@ export default function DashboardPage() {
 
   async function revokeApiToken(tokenId: number) {
     if (!token) return;
+    if (!confirmAction("Revoke this API token? Existing bots using it will stop working.")) return;
     setError(null);
     try {
       const result = await apiJson<ApiTokenRecord>(`/auth/api-tokens/${tokenId}`, {
@@ -378,6 +390,7 @@ export default function DashboardPage() {
   async function supportAppeal(appeal: Appeal) {
     if (!token || !appeal.proposed_result) return;
     const nextResult = appeal.proposed_result === "YES" ? "NO" : "YES";
+    if (!confirmAction(`Support this appeal and change the proposed result to ${nextResult}?`)) return;
     await apiJson(`/markets/appeals/${appeal.id}/support`, {
       method: "POST",
       headers: authHeaders(token),
@@ -388,6 +401,7 @@ export default function DashboardPage() {
 
   async function rejectAppeal(appeal: Appeal) {
     if (!token) return;
+    if (!confirmAction("Reject this appeal?")) return;
     await apiJson(`/markets/appeals/${appeal.id}/reject`, {
       method: "POST",
       headers: authHeaders(token),
@@ -398,13 +412,14 @@ export default function DashboardPage() {
 
   async function deleteForumPost(slug: string) {
     if (!token) return;
-    if (!window.confirm("Delete this post and all of its replies?")) return;
+    if (!confirmAction("Delete this post and all of its replies?")) return;
     await apiJson(`/forum/${slug}`, { method: "DELETE", headers: authHeaders(token) });
     await loadDashboard(token);
   }
 
   async function deleteForumReply(slug: string, replyId: number) {
     if (!token) return;
+    if (!confirmAction("Delete this reply?")) return;
     await apiJson(`/forum/${slug}/replies/${replyId}`, { method: "DELETE", headers: authHeaders(token) });
     await loadDashboard(token);
   }
