@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from pathlib import Path
 from urllib import request
 import base64
-import ssl
 import json
+import os
 import re
+import ssl
 
 import certifi
 
@@ -16,6 +19,9 @@ class MediaError(ValueError):
 
 SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
 IMAGE_REQUEST_TIMEOUT_SECONDS = 180
+IMAGE_MODEL_BASE_URL = os.environ.get("IMAGE_MODEL_BASE_URL", "https://yunwu.ai/v1")
+IMAGE_MODEL_NAME = os.environ.get("IMAGE_MODEL_NAME", "gpt-image-2")
+IMAGE_MODEL_API_KEY = os.environ.get("IMAGE_MODEL_API_KEY")
 
 
 def cover_prompt_for_event(*, title: str, description: str, category: str) -> str:
@@ -27,16 +33,16 @@ def cover_prompt_for_event(*, title: str, description: str, category: str) -> st
 
 
 def generate_image(prompt: str, *, slug: str, size: str = "1536x1024") -> str:
-    if settings.image_model_api_key:
+    if IMAGE_MODEL_API_KEY:
         return _generate_remote_image(prompt, slug=slug, size=size)
     return _generate_local_cover(prompt, slug=slug)
 
 
 def _generate_remote_image(prompt: str, *, slug: str, size: str) -> str:
-    endpoint = f"{settings.image_model_base_url.rstrip('/')}/images/generations"
+    endpoint = f"{IMAGE_MODEL_BASE_URL.rstrip('/')}/images/generations"
     payload = json.dumps(
         {
-            "model": settings.image_model_name,
+            "model": IMAGE_MODEL_NAME,
             "prompt": prompt,
             "size": size,
             "n": 1,
@@ -46,7 +52,7 @@ def _generate_remote_image(prompt: str, *, slug: str, size: str) -> str:
         endpoint,
         data=payload,
         headers={
-            "Authorization": f"Bearer {settings.image_model_api_key}",
+            "Authorization": f"Bearer {IMAGE_MODEL_API_KEY}",
             "Content-Type": "application/json",
         },
         method="POST",

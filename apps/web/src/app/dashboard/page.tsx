@@ -147,6 +147,7 @@ export default function DashboardPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingIn, setCheckingIn] = useState(false);
+  const [reviewActionSlug, setReviewActionSlug] = useState<string | null>(null);
   const [eventTitle, setEventTitle] = useState(t("event.defaultTitle"));
   const [eventDescription, setEventDescription] = useState(t("event.defaultDescription"));
   const [eventCriteria, setEventCriteria] = useState(t("event.defaultCriteria"));
@@ -174,31 +175,53 @@ export default function DashboardPage() {
     }
   }
 
+  async function loadAccount(currentToken: string) {
+    const result = await apiJson<MeResponse>("/auth/me", { headers: authHeaders(currentToken) });
+    setData(result);
+    return result;
+  }
+
+  async function loadApiTokens(currentToken: string) {
+    const tokens = await apiJson<ApiTokenListResponse>("/auth/api-tokens", { headers: authHeaders(currentToken) });
+    setApiTokens(tokens.tokens);
+  }
+
+  async function loadPendingMarkets(currentToken: string) {
+    const pending = await apiJson<MarketListResponse>("/markets/pending", { headers: authHeaders(currentToken) });
+    setPendingMarkets(pending.markets);
+  }
+
+  async function loadPendingAppeals(currentToken: string) {
+    const appeals = await apiJson<AppealListResponse>("/markets/appeals/pending", { headers: authHeaders(currentToken) });
+    setPendingAppeals(appeals.appeals);
+  }
+
+  async function loadForumModeration() {
+    const forum = await apiJson<ForumPostListResponse>("/forum", { cache: "no-store" });
+    const details = await Promise.all(
+      forum.posts.slice(0, 10).map((post) => apiJson<ForumPostDetail>(`/forum/${post.slug}`, { cache: "no-store" }))
+    );
+    setForumPosts(details);
+  }
+
   async function loadDashboard(currentToken: string) {
     setLoading(true);
     setError(null);
     try {
-      const result = await apiJson<MeResponse>("/auth/me", { headers: authHeaders(currentToken) });
-      setData(result);
-      await loadCommon();
-      const tokens = await apiJson<ApiTokenListResponse>("/auth/api-tokens", { headers: authHeaders(currentToken) });
-      setApiTokens(tokens.tokens);
+      const result = await loadAccount(currentToken);
+      await Promise.all([loadCommon(), loadApiTokens(currentToken)]);
       if (result.user.is_admin) {
-        const pending = await apiJson<MarketListResponse>("/markets/pending", { headers: authHeaders(currentToken) });
-        setPendingMarkets(pending.markets);
-        const appeals = await apiJson<AppealListResponse>("/markets/appeals/pending", { headers: authHeaders(currentToken) });
-        setPendingAppeals(appeals.appeals);
-        const forum = await apiJson<ForumPostListResponse>("/forum", { cache: "no-store" });
-        const details = await Promise.all(
-          forum.posts.slice(0, 10).map((post) => apiJson<ForumPostDetail>(`/forum/${post.slug}`, { cache: "no-store" }))
-        );
-        setForumPosts(details);
+        await Promise.all([loadPendingMarkets(currentToken), loadPendingAppeals(currentToken), loadForumModeration()]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("readError"));
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadReviewQueues(currentToken: string) {
+    await Promise.all([loadPendingMarkets(currentToken), loadCommon()]);
   }
 
   useEffect(() => {
@@ -221,7 +244,7 @@ export default function DashboardPage() {
         method: "POST",
         headers: authHeaders(token),
       });
-      await loadDashboard(token);
+      await loadAccount(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("checkInError"));
     } finally {
@@ -252,7 +275,7 @@ export default function DashboardPage() {
       });
       setNotice(t("eventSubmitted"));
       if (data?.user.is_admin) {
-        await loadDashboard(token);
+        await loadPendingMarkets(token);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("eventError"));
@@ -262,15 +285,31 @@ export default function DashboardPage() {
   async function approveMarket(slug: string) {
     if (!token) return;
     if (!confirmAction("Approve this event and publish it to the market list?")) return;
-    await apiJson(`/markets/${slug}/approve`, { method: "POST", headers: authHeaders(token) });
-    await loadDashboard(token);
+    setError(null);
+    setReviewActionSlug(slug);
+    try {
+      await apiJson(`/markets/${slug}/approve`, { method: "POST", headers: authHeaders(token) });
+      await loadReviewQueues(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("readError"));
+    } finally {
+      setReviewActionSlug(null);
+    }
   }
 
   async function rejectMarket(slug: string) {
     if (!token) return;
     if (!confirmAction("Reject this submitted event?")) return;
-    await apiJson(`/markets/${slug}/reject`, { method: "POST", headers: authHeaders(token) });
-    await loadDashboard(token);
+    setError(null);
+    setReviewActionSlug(slug);
+    try {
+      await apiJson(`/markets/${slug}/reject`, { method: "POST", headers: authHeaders(token) });
+      await loadReviewQueues(token);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("readError"));
+    } finally {
+      setReviewActionSlug(null);
+    }
   }
 
   async function addCategory() {
@@ -321,7 +360,7 @@ export default function DashboardPage() {
     if (!confirmAction("Delete this event and refund all bought tokens?")) return;
     await apiJson(`/markets/${settlementSlug}`, { method: "DELETE", headers: authHeaders(token) });
     setSettlementSlug("");
-    await loadDashboard(token);
+    await Promise.all([loadCommon(), loadPendingMarkets(token), loadAccount(token)]);
   }
 
   async function submitTransfer() {
@@ -342,7 +381,7 @@ export default function DashboardPage() {
       });
       setNotice(t("transferDone"));
       setTransferAmount("1.00");
-      await loadDashboard(token);
+      await loadAccount(token);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("transferError"));
     }
@@ -396,7 +435,7 @@ export default function DashboardPage() {
       headers: authHeaders(token),
       body: JSON.stringify({ result: nextResult }),
     });
-    await loadDashboard(token);
+    await Promise.all([loadPendingAppeals(token), loadCommon()]);
   }
 
   async function rejectAppeal(appeal: Appeal) {
@@ -407,21 +446,21 @@ export default function DashboardPage() {
       headers: authHeaders(token),
       body: JSON.stringify({}),
     });
-    await loadDashboard(token);
+    await loadPendingAppeals(token);
   }
 
   async function deleteForumPost(slug: string) {
     if (!token) return;
     if (!confirmAction("Delete this post and all of its replies?")) return;
     await apiJson(`/forum/${slug}`, { method: "DELETE", headers: authHeaders(token) });
-    await loadDashboard(token);
+    await loadForumModeration();
   }
 
   async function deleteForumReply(slug: string, replyId: number) {
     if (!token) return;
     if (!confirmAction("Delete this reply?")) return;
     await apiJson(`/forum/${slug}/replies/${replyId}`, { method: "DELETE", headers: authHeaders(token) });
-    await loadDashboard(token);
+    await loadForumModeration();
   }
 
   const accountKey = data?.user.account_key ?? t("signedOut");
@@ -633,10 +672,10 @@ export default function DashboardPage() {
                           {item.category} · {new Date(item.close_time).toLocaleString()}
                         </div>
                         <div className="mt-3 grid grid-cols-2 gap-2">
-                          <Button size="sm" onClick={() => approveMarket(item.slug)}>
+                          <Button size="sm" onClick={() => approveMarket(item.slug)} disabled={reviewActionSlug !== null}>
                             {t("review.approve")}
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => rejectMarket(item.slug)}>
+                          <Button size="sm" variant="outline" onClick={() => rejectMarket(item.slug)} disabled={reviewActionSlug !== null}>
                             {t("review.reject")}
                           </Button>
                         </div>

@@ -25,9 +25,7 @@ class Settings(BaseSettings):
     smtp_from: str | None = None
     smtp_use_tls: bool = True
     smtp_use_ssl: bool = False
-    image_model_base_url: str = "https://yunwu.ai/v1"
-    image_model_name: str = "gpt-image-2"
-    image_model_api_key: str | None = None
+    smtp_timeout_seconds: int = 3
     media_storage_dir: str = ".local/media"
     media_public_base_url: str = "/media"
 

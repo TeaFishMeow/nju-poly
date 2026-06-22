@@ -337,8 +337,7 @@ async def test_non_participant_cannot_appeal(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_user_submits_pending_event_and_admin_approves_with_cover(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.markets.service.generate_image", lambda *_args, **_kwargs: "/media/test-cover.png")
+async def test_user_submits_pending_event_and_admin_approves_without_generating_cover(tmp_path: Path) -> None:
     engine, session_factory = await _make_session_factory(tmp_path / "markets.sqlite")
     try:
         async with session_factory() as session:
@@ -363,8 +362,7 @@ async def test_user_submits_pending_event_and_admin_approves_with_cover(tmp_path
 
             event = await get_event_by_slug(session, "pending-test")
             assert event.status == EventStatus.OPEN
-            assert event.cover_url is not None
-            assert event.cover_url.startswith("/media/")
+            assert event.cover_url is None
     finally:
         await engine.dispose()
 

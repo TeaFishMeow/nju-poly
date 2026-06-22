@@ -20,7 +20,7 @@ def send_verification_email(*, email: str, code: str) -> str:
     message.set_content(f"你的南哪竞猜验证码是 {code}，{settings.verification_code_ttl_minutes} 分钟内有效。")
 
     smtp_class = smtplib.SMTP_SSL if settings.smtp_use_ssl else smtplib.SMTP
-    with smtp_class(settings.smtp_host, settings.smtp_port, timeout=10) as smtp:
+    with smtp_class(settings.smtp_host, settings.smtp_port, timeout=settings.smtp_timeout_seconds) as smtp:
         if settings.smtp_use_tls:
             smtp.starttls()
         if settings.smtp_username and settings.smtp_password:

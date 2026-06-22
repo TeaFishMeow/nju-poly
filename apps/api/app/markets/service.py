@@ -11,7 +11,6 @@ from app.appeals.service import appeal_window_end_for_event, reset_appeal_window
 from app.auth.models import User
 from app.ledger.service import format_nwc, get_account, transfer
 from app.markets.models import Category, Event, EventResult, EventStatus, MarketSide, Position
-from app.media.service import cover_prompt_for_event, generate_image
 
 
 class MarketError(ValueError):
@@ -206,8 +205,6 @@ async def approve_event(session: AsyncSession, *, event: Event, admin: User) -> 
     require_admin(admin)
     if event.status != EventStatus.PENDING:
         raise InvalidMarketStateError("only pending events can be approved")
-    prompt = cover_prompt_for_event(title=event.title, description=event.description, category=event.category)
-    event.cover_url = generate_image(prompt, slug=event.slug)
     event.status = EventStatus.OPEN
     await session.flush()
     return event

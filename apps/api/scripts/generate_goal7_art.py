@@ -18,7 +18,7 @@ import app.ledger.models  # noqa: F401
 from app.core.config import settings
 from app.db.session import async_session
 from app.markets.models import Event, EventStatus
-from app.media.service import cover_prompt_for_event, generate_image
+from scripts.image_generation import IMAGE_MODEL_API_KEY, IMAGE_MODEL_BASE_URL, IMAGE_MODEL_NAME, cover_prompt_for_event, generate_image
 
 ROOT = Path(__file__).resolve().parents[3]
 WEB_BRAND_DIR = ROOT / "apps" / "web" / "public" / "brand"
@@ -103,7 +103,7 @@ def _write_web_brand_code(*, logo_public_path: str) -> None:
 
 
 async def main() -> None:
-    if not settings.image_model_api_key:
+    if not IMAGE_MODEL_API_KEY:
         raise SystemExit(
             "IMAGE_MODEL_API_KEY is not set. Put the ai.md image-model key in .env, then rerun: "
             "uv run python scripts/generate_goal7_art.py"
@@ -127,8 +127,8 @@ async def main() -> None:
                     "publicPath": logo_public_path,
                     "sourceMediaUrl": logo_url,
                     "prompt": LOGO_PROMPT,
-                    "model": settings.image_model_name,
-                    "baseUrl": settings.image_model_base_url,
+                    "model": IMAGE_MODEL_NAME,
+                    "baseUrl": IMAGE_MODEL_BASE_URL,
                 }
             },
             ensure_ascii=False,
