@@ -1,6 +1,7 @@
 [Unit]
 Description=NJUPoly FastAPI
-After=network.target postgresql.service
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
