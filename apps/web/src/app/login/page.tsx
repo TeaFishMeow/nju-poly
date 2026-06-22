@@ -25,7 +25,7 @@ type AuthResponse = {
 export default function LoginPage() {
   const router = useRouter();
   const t = useTranslations("login");
-  const [email, setEmail] = useState("251502013@smail.nju.edu.cn");
+  const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
   const [status, setStatus] = useState(t("initialStatus"));
@@ -97,7 +97,7 @@ export default function LoginPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+              <Input id="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="student@smail.nju.edu.cn" />
             </div>
             <Button className="w-full" onClick={requestCode} disabled={loading || resendSeconds > 0}>
               {resendSeconds > 0 ? `${t("sendCode")} (${resendSeconds}s)` : t("sendCode")}
