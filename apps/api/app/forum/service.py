@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import re
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import delete, desc, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,14 @@ class ForumPostNotFoundError(ForumError):
 
 
 class ForumSlugAlreadyExistsError(ForumError):
+    pass
+
+
+class ForumReplyNotFoundError(ForumError):
+    pass
+
+
+class ForumAdminRequiredError(ForumError):
     pass
 
 
@@ -110,3 +118,23 @@ async def create_reply(session: AsyncSession, *, post: ForumPost, author: User, 
     post.updated_at = reply.created_at
     await session.flush()
     return reply
+
+
+async def delete_post(session: AsyncSession, *, post: ForumPost, admin: User) -> None:
+    _require_admin(admin)
+    await session.execute(delete(ForumReply).where(ForumReply.post_id == post.id))
+    await session.delete(post)
+    await session.flush()
+
+
+async def delete_reply(session: AsyncSession, *, post: ForumPost, reply_id: int, admin: User) -> None:
+    _require_admin(admin)
+    result = await session.execute(delete(ForumReply).where(ForumReply.post_id == post.id, ForumReply.id == reply_id))
+    if result.rowcount != 1:
+        raise ForumReplyNotFoundError(f"forum reply not found: {reply_id}")
+    await session.flush()
+
+
+def _require_admin(user: User) -> None:
+    if not user.is_admin:
+        raise ForumAdminRequiredError("admin privileges required")

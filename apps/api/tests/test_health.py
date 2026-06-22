@@ -24,6 +24,7 @@ def test_openapi_includes_ledger_routes() -> None:
     assert "/markets/categories" in response.json()["paths"]
     assert "/markets/{slug}/approve" in response.json()["paths"]
     assert "/markets/{slug}/reject" in response.json()["paths"]
+    assert "delete" in response.json()["paths"]["/markets/{slug}"]
     assert "/auth/api-tokens" in response.json()["paths"]
     assert "/auth/transfers" in response.json()["paths"]
     assert "/robot/account" in response.json()["paths"]
@@ -33,3 +34,5 @@ def test_openapi_includes_ledger_routes() -> None:
     assert "/forum" in response.json()["paths"]
     assert "/forum/{slug}" in response.json()["paths"]
     assert "/forum/{slug}/replies" in response.json()["paths"]
+    assert "/forum/{slug}/replies/{reply_id}" in response.json()["paths"]
+    assert "delete" in response.json()["paths"]["/forum/{slug}"]

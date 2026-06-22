@@ -222,6 +222,36 @@ async def reject_event(session: AsyncSession, *, event: Event, admin: User) -> E
     return event
 
 
+async def delete_event_before_close(session: AsyncSession, *, event: Event, admin: User) -> Event:
+    require_admin(admin)
+    if event.status not in {EventStatus.PENDING, EventStatus.OPEN}:
+        raise InvalidMarketStateError("only pending or open events can be deleted before close")
+    if _aware_utc(event.close_time) <= now_utc():
+        raise InvalidMarketStateError("event has reached its close time")
+
+    positions = list((await session.scalars(select(Position).where(Position.event_id == event.id).order_by(Position.id))).all())
+    for position in positions:
+        await transfer(
+            session,
+            from_account_key=event_account_key(event.id),
+            to_account_key=f"u:{position.user_student_id}",
+            amount_cents=position.stake_cents,
+            kind="market_delete_refund",
+            ref=f"event:{event.id}",
+        )
+
+    event.status = EventStatus.REJECTED
+    event.proposed_result = None
+    event.proposed_at = None
+    event.appeal_window_ends_at = None
+    event.final_result = None
+    event.settled_at = None
+    event.yes_pool_cents = 0
+    event.no_pool_cents = 0
+    await session.flush()
+    return event
+
+
 async def ensure_category_exists(session: AsyncSession, name: str) -> Category:
     category = await session.get(Category, name)
     if category is None:

@@ -10,10 +10,14 @@ from app.db.session import get_session
 from app.forum.models import ForumPost, ForumReply
 from app.forum.service import (
     ForumError,
+    ForumAdminRequiredError,
     ForumPostNotFoundError,
+    ForumReplyNotFoundError,
     ForumSlugAlreadyExistsError,
     create_post,
     create_reply,
+    delete_post,
+    delete_reply,
     get_post_by_slug,
     get_post_detail,
     list_posts,
@@ -140,3 +144,40 @@ async def create_forum_reply(
     except ForumError as exc:
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.delete("/{slug}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_forum_post(
+    slug: str,
+    user: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    try:
+        post = await get_post_by_slug(session, slug)
+        await delete_post(session, post=post, admin=user)
+        await session.commit()
+    except ForumAdminRequiredError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except ForumPostNotFoundError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.delete("/{slug}/replies/{reply_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_forum_reply(
+    slug: str,
+    reply_id: int,
+    user: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    try:
+        post = await get_post_by_slug(session, slug)
+        await delete_reply(session, post=post, reply_id=reply_id, admin=user)
+        await session.commit()
+    except ForumAdminRequiredError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except (ForumPostNotFoundError, ForumReplyNotFoundError) as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

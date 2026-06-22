@@ -20,6 +20,7 @@ from app.markets.service import (
     create_category,
     create_event,
     delete_category,
+    delete_event_before_close,
     event_account_key,
     get_event_by_slug,
     list_categories,
@@ -81,6 +82,70 @@ async def test_place_bet_updates_pool_position_and_probability(tmp_path: Path) -
             assert probability_yes(event.yes_pool_cents, event.no_pool_cents) == 100
             assert user_account.balance_cents == 750
             assert event_account.balance_cents == 250
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_admin_deletes_open_event_before_close_and_refunds_all_positions(tmp_path: Path) -> None:
+    engine, session_factory = await _make_session_factory(tmp_path / "delete-refund.sqlite")
+    try:
+        async with session_factory() as session:
+            admin = await _create_user(session, "251502013")
+            yes_user = await _create_user(session, "240000013")
+            no_user = await _create_user(session, "240000014")
+            await _create_test_category(session)
+            event = await create_event(
+                session,
+                slug="delete-refund",
+                title="Delete refund market",
+                description="test",
+                criteria="test",
+                category="测试",
+                close_time=datetime.now(UTC) + timedelta(days=1),
+                creator=admin,
+            )
+            await place_bet(session, event=event, user=yes_user, side=MarketSide.YES, amount_cents=200)
+            await place_bet(session, event=event, user=no_user, side=MarketSide.NO, amount_cents=300)
+
+            await delete_event_before_close(session, event=event, admin=admin)
+            await session.commit()
+
+            yes_account = await get_account(session, yes_user.account_key)
+            no_account = await get_account(session, no_user.account_key)
+            event_account = await get_account(session, event_account_key(event.id))
+            event = await get_event_by_slug(session, "delete-refund")
+
+            assert yes_account.balance_cents == 1000
+            assert no_account.balance_cents == 1000
+            assert event_account.balance_cents == 0
+            assert event.status == EventStatus.REJECTED
+            assert event.yes_pool_cents == 0
+            assert event.no_pool_cents == 0
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_admin_cannot_delete_event_after_close_time(tmp_path: Path) -> None:
+    engine, session_factory = await _make_session_factory(tmp_path / "delete-closed.sqlite")
+    try:
+        async with session_factory() as session:
+            admin = await _create_user(session, "251502013")
+            await _create_test_category(session)
+            event = await create_event(
+                session,
+                slug="delete-too-late",
+                title="Too late",
+                description="test",
+                criteria="test",
+                category="测试",
+                close_time=datetime.now(UTC) - timedelta(seconds=1),
+                creator=admin,
+            )
+
+            with pytest.raises(InvalidMarketStateError):
+                await delete_event_before_close(session, event=event, admin=admin)
     finally:
         await engine.dispose()
 

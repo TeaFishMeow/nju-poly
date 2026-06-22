@@ -19,6 +19,7 @@ NJU_EMAIL_PATTERN = re.compile(r"^(?P<student_id>\d+)@smail\.nju\.edu\.cn$")
 REGISTRATION_GRANT_CENTS = 1000
 DAILY_CHECKIN_REWARD_CENTS = 100
 MAX_VERIFICATION_ATTEMPTS = 5
+VERIFICATION_RESEND_COOLDOWN_SECONDS = 60
 SHANGHAI_TZ = timezone(timedelta(hours=8), name="Asia/Shanghai")
 
 
@@ -47,6 +48,10 @@ class RecipientNotFoundError(AuthError):
 
 
 class DuplicateCheckInError(AuthError):
+    pass
+
+
+class VerificationRateLimitError(AuthError):
     pass
 
 
@@ -132,8 +137,23 @@ def _new_code() -> str:
 async def request_verification_code(session: AsyncSession, *, email: str) -> VerificationRequestResult:
     normalized_email = email.strip().lower()
     parse_nju_email(normalized_email)
+    now = _now()
+    latest = await session.scalar(
+        select(EmailVerificationCode)
+        .where(EmailVerificationCode.email == normalized_email)
+        .order_by(desc(EmailVerificationCode.created_at), desc(EmailVerificationCode.id))
+        .limit(1)
+    )
+    if latest is not None and latest.created_at is not None:
+        latest_created_at = latest.created_at
+        if latest_created_at.tzinfo is None:
+            latest_created_at = latest_created_at.replace(tzinfo=UTC)
+        retry_at = latest_created_at + timedelta(seconds=VERIFICATION_RESEND_COOLDOWN_SECONDS)
+        if retry_at > now:
+            retry_seconds = max(1, int((retry_at - now).total_seconds()))
+            raise VerificationRateLimitError(f"wait {retry_seconds}s before requesting another code")
     code = _new_code()
-    expires_at = _now() + timedelta(minutes=settings.verification_code_ttl_minutes)
+    expires_at = now + timedelta(minutes=settings.verification_code_ttl_minutes)
     record = EmailVerificationCode(email=normalized_email, code_hash=_hash_code(normalized_email, code), expires_at=expires_at)
     session.add(record)
     await session.flush()

@@ -23,6 +23,7 @@ from app.markets.service import (
     create_category,
     create_event,
     delete_category,
+    delete_event_before_close,
     get_event_by_slug,
     list_categories,
     list_markets,
@@ -270,6 +271,32 @@ async def reject_market(
     except InvalidMarketStateError as exc:
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.delete("/{slug}", response_model=MarketResponse)
+async def delete_market(
+    slug: str,
+    user: User = Depends(current_user),
+    session: AsyncSession = Depends(get_session),
+) -> MarketResponse:
+    try:
+        event = await get_event_by_slug(session, slug)
+        await delete_event_before_close(session, event=event, admin=user)
+        await session.commit()
+        await session.refresh(event)
+        return MarketResponse(**market_to_summary(event, await count_participants(session, event.id)))
+    except AdminRequiredError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except EventNotFoundError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except InvalidMarketStateError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    except LedgerError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.post("/{slug}/bets", response_model=MarketResponse, status_code=status.HTTP_201_CREATED)

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, CheckCircle2, ClipboardCopy, KeyRound, Scale, ShieldCheck, Tags } from "lucide-react";
+import { CalendarPlus, CheckCircle2, ClipboardCopy, KeyRound, MessageSquare, Scale, ShieldCheck, Tags, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { SiteShell } from "@/components/site-shell";
@@ -71,6 +71,32 @@ type AppealListResponse = {
   appeals: Appeal[];
 };
 
+type ForumReply = {
+  id: number;
+  body: string;
+  author_student_id: string;
+  created_at: string;
+};
+
+type ForumPost = {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  author_student_id: string;
+  replies: number;
+  updated_at: string;
+};
+
+type ForumPostDetail = ForumPost & {
+  body: string;
+  reply_items: ForumReply[];
+};
+
+type ForumPostListResponse = {
+  posts: ForumPost[];
+};
+
 type ApiTokenRecord = {
   id: number;
   name: string;
@@ -111,6 +137,7 @@ export default function DashboardPage() {
   const [pendingMarkets, setPendingMarkets] = useState<Market[]>([]);
   const [openMarkets, setOpenMarkets] = useState<Market[]>([]);
   const [pendingAppeals, setPendingAppeals] = useState<Appeal[]>([]);
+  const [forumPosts, setForumPosts] = useState<ForumPostDetail[]>([]);
   const [apiTokens, setApiTokens] = useState<ApiTokenRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -157,6 +184,11 @@ export default function DashboardPage() {
         setPendingMarkets(pending.markets);
         const appeals = await apiJson<AppealListResponse>("/markets/appeals/pending", { headers: authHeaders(currentToken) });
         setPendingAppeals(appeals.appeals);
+        const forum = await apiJson<ForumPostListResponse>("/forum", { cache: "no-store" });
+        const details = await Promise.all(
+          forum.posts.slice(0, 10).map((post) => apiJson<ForumPostDetail>(`/forum/${post.slug}`, { cache: "no-store" }))
+        );
+        setForumPosts(details);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("readError"));
@@ -274,6 +306,14 @@ export default function DashboardPage() {
     await loadCommon();
   }
 
+  async function deleteAndRefundSelectedMarket() {
+    if (!token || !settlementSlug) return;
+    if (!window.confirm("Delete this event and refund all bought tokens?")) return;
+    await apiJson(`/markets/${settlementSlug}`, { method: "DELETE", headers: authHeaders(token) });
+    setSettlementSlug("");
+    await loadDashboard(token);
+  }
+
   async function submitTransfer() {
     if (!token) return;
     setError(null);
@@ -356,10 +396,28 @@ export default function DashboardPage() {
     await loadDashboard(token);
   }
 
+  async function deleteForumPost(slug: string) {
+    if (!token) return;
+    if (!window.confirm("Delete this post and all of its replies?")) return;
+    await apiJson(`/forum/${slug}`, { method: "DELETE", headers: authHeaders(token) });
+    await loadDashboard(token);
+  }
+
+  async function deleteForumReply(slug: string, replyId: number) {
+    if (!token) return;
+    await apiJson(`/forum/${slug}/replies/${replyId}`, { method: "DELETE", headers: authHeaders(token) });
+    await loadDashboard(token);
+  }
+
   const accountKey = data?.user.account_key ?? t("signedOut");
   const balanceValue = data ? data.balance.replace(" NWC", "") : loading ? "..." : "0.00";
   const adminValue = data?.user.is_admin ? t("stats.adminYes") : t("stats.adminNo");
   const ledgerItems = data?.ledger ?? [];
+  const selectedSettlementMarket = openMarkets.find((market) => market.slug === settlementSlug);
+  const selectedMarketCanBeDeleted =
+    Boolean(data?.user.is_admin) &&
+    selectedSettlementMarket?.status === "open" &&
+    new Date(selectedSettlementMarket.close_time).getTime() > Date.now();
 
   return (
     <SiteShell>
@@ -604,7 +662,7 @@ export default function DashboardPage() {
                     NO
                   </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button size="sm" onClick={closeSelectedMarket} disabled={!data?.user.is_admin || !settlementSlug}>
                     {t("settlement.close")}
                   </Button>
@@ -613,6 +671,10 @@ export default function DashboardPage() {
                   </Button>
                   <Button size="sm" variant="outline" onClick={settleSelectedMarket} disabled={!data?.user.is_admin || !settlementSlug}>
                     {t("settlement.settle")}
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={deleteAndRefundSelectedMarket} disabled={!selectedMarketCanBeDeleted}>
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    Delete + refund
                   </Button>
                 </div>
               </CardContent>
@@ -658,6 +720,60 @@ export default function DashboardPage() {
                   )
                 ) : (
                   <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">{t("appeal.locked")}</div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-primary" aria-hidden="true" />
+                  Forum moderation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {data?.user.is_admin ? (
+                  forumPosts.length > 0 ? (
+                    forumPosts.map((post) => (
+                      <div key={post.slug} className="rounded-md border bg-background p-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-semibold">{post.title}</div>
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {post.author_student_id} · {new Date(post.updated_at).toLocaleString()}
+                            </div>
+                          </div>
+                          <Button size="sm" variant="destructive" onClick={() => deleteForumPost(post.slug)}>
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            Delete post
+                          </Button>
+                        </div>
+                        <div className="mt-3 rounded-md bg-muted p-3 text-sm leading-6 text-muted-foreground">{post.excerpt}</div>
+                        {post.reply_items.length > 0 ? (
+                          <div className="mt-3 space-y-2">
+                            {post.reply_items.map((reply) => (
+                              <div key={reply.id} className="grid grid-cols-[1fr_auto] gap-2 rounded-md border p-2 text-sm">
+                                <div className="min-w-0">
+                                  <div className="text-xs text-muted-foreground">
+                                    {reply.author_student_id} · {new Date(reply.created_at).toLocaleString()}
+                                  </div>
+                                  <div className="mt-1 break-words">{reply.body}</div>
+                                </div>
+                                <Button size="sm" variant="outline" onClick={() => deleteForumReply(post.slug, reply.id)}>
+                                  <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                  Delete reply
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">No forum content yet.</div>
+                  )
+                ) : (
+                  <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">Sign in as an admin to moderate forum content.</div>
                 )}
               </CardContent>
             </Card>

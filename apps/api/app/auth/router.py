@@ -12,6 +12,7 @@ from app.auth.service import (
     InvalidVerificationCodeError,
     RecipientNotFoundError,
     SessionTokenError,
+    VerificationRateLimitError,
     authenticate_bearer_token,
     check_in,
     create_api_token,
@@ -180,6 +181,9 @@ async def request_code(request: VerificationCodeRequest, session: AsyncSession =
             delivery=result.delivery,
             dev_code=result.dev_code,
         )
+    except VerificationRateLimitError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc)) from exc
     except AuthError as exc:
         await session.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

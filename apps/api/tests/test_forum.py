@@ -20,11 +20,11 @@ async def _make_session_factory(path: Path):
     return engine, async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def _create_session_token(session_factory) -> str:
+async def _create_session_token(session_factory, student_id: str = "240000201") -> str:
     async with session_factory() as session:
-        code_result = await request_verification_code(session, email="240000201@smail.nju.edu.cn")
+        code_result = await request_verification_code(session, email=f"{student_id}@smail.nju.edu.cn")
         assert code_result.dev_code is not None
-        auth_result = await verify_email_code(session, email="240000201@smail.nju.edu.cn", code=code_result.dev_code)
+        auth_result = await verify_email_code(session, email=f"{student_id}@smail.nju.edu.cn", code=code_result.dev_code)
         await session.commit()
         return auth_result.token
 
@@ -78,3 +78,45 @@ async def test_forum_post_and_reply_http_flow(tmp_path: Path) -> None:
     finally:
         app.dependency_overrides.clear()
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_admin_deletes_forum_reply_and_post_http_flow(tmp_path: Path) -> None:
+    engine, session_factory = await _make_session_factory(tmp_path / "forum-admin.sqlite")
+    try:
+        user_token = await _create_session_token(session_factory, "240000202")
+        admin_token = await _create_session_token(session_factory, "251502013")
+        _install_session_override(session_factory)
+        with TestClient(app) as client:
+            post = client.post(
+                "/forum",
+                headers={"Authorization": f"Bearer {user_token}"},
+                json={"slug": "moderation-thread", "title": "Moderation thread", "body": "Needs moderation"},
+            )
+            assert post.status_code == 201
+            reply = client.post(
+                "/forum/moderation-thread/replies",
+                headers={"Authorization": f"Bearer {user_token}"},
+                json={"body": "Remove this reply"},
+            )
+            assert reply.status_code == 201
+            reply_id = reply.json()["id"]
+
+            forbidden = client.delete(f"/forum/moderation-thread/replies/{reply_id}", headers={"Authorization": f"Bearer {user_token}"})
+            assert forbidden.status_code == 403
+
+            deleted_reply = client.delete(f"/forum/moderation-thread/replies/{reply_id}", headers={"Authorization": f"Bearer {admin_token}"})
+            assert deleted_reply.status_code == 204
+            detail = client.get("/forum/moderation-thread")
+            assert detail.status_code == 200
+            assert detail.json()["reply_items"] == []
+
+            deleted_post = client.delete("/forum/moderation-thread", headers={"Authorization": f"Bearer {admin_token}"})
+            assert deleted_post.status_code == 204
+            missing = client.get("/forum/moderation-thread")
+            assert missing.status_code == 404
+    finally:
+        app.dependency_overrides.clear()
+        await engine.dispose()
+
+

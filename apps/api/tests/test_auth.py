@@ -8,6 +8,7 @@ from app.auth.models import DailyCheckIn, User
 from app.auth.service import (
     DuplicateCheckInError,
     InvalidEmailError,
+    VerificationRateLimitError,
     authenticate_bearer_token,
     check_in,
     dashboard_snapshot,
@@ -33,6 +34,20 @@ async def test_rejects_non_nju_student_email(tmp_path: Path) -> None:
         async with session_factory() as session:
             with pytest.raises(InvalidEmailError):
                 await request_verification_code(session, email="student@nju.edu.cn")
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_request_verification_code_is_rate_limited_per_email(tmp_path: Path) -> None:
+    engine, session_factory = await _make_session_factory(tmp_path / "auth-rate.sqlite")
+    try:
+        async with session_factory() as session:
+            first = await request_verification_code(session, email="240000099@smail.nju.edu.cn")
+            assert first.dev_code is not None
+
+            with pytest.raises(VerificationRateLimitError):
+                await request_verification_code(session, email="240000099@smail.nju.edu.cn")
     finally:
         await engine.dispose()
 
@@ -66,6 +81,8 @@ async def test_email_login_creates_user_grants_balance_and_authenticates(tmp_pat
             assert user_count == 1
     finally:
         await engine.dispose()
+
+
 
 
 @pytest.mark.asyncio

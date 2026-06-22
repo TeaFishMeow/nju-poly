@@ -37,8 +37,12 @@ export function MarketCard({ slug, title, category, yes, volume, closeLabel }: M
           <ProbabilityBar yes={yes} className="mt-4 max-w-md" />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="yes">YES {yes}%</Button>
-          <Button variant="no">NO {100 - yes}%</Button>
+          <Button asChild variant="yes">
+            <Link href={`/markets/${slug}?side=YES`}>YES {yes}%</Link>
+          </Button>
+          <Button asChild variant="no">
+            <Link href={`/markets/${slug}?side=NO`}>NO {100 - yes}%</Link>
+          </Button>
           <Button asChild variant="outline" className="col-span-2">
             <Link href={`/markets/${slug}`}>
               {t("viewMarket")}

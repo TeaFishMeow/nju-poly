@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MailCheck, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,6 +31,13 @@ export default function LoginPage() {
   const [status, setStatus] = useState(t("initialStatus"));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setTimeout(() => setResendSeconds((current) => Math.max(0, current - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [resendSeconds]);
 
   async function requestCode() {
     setLoading(true);
@@ -45,6 +52,7 @@ export default function LoginPage() {
       if (result.dev_code) {
         setCode(result.dev_code);
       }
+      setResendSeconds(60);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("requestError"));
     } finally {
@@ -91,8 +99,8 @@ export default function LoginPage() {
               <Label htmlFor="email">{t("email")}</Label>
               <Input id="email" value={email} onChange={(event) => setEmail(event.target.value)} />
             </div>
-            <Button className="w-full" onClick={requestCode} disabled={loading}>
-              {t("sendCode")}
+            <Button className="w-full" onClick={requestCode} disabled={loading || resendSeconds > 0}>
+              {resendSeconds > 0 ? `${t("sendCode")} (${resendSeconds}s)` : t("sendCode")}
             </Button>
             <div className="space-y-2">
               <Label htmlFor="code">{t("code")}</Label>
