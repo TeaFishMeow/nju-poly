@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.auth.router import current_user
+from app.core.config import settings
 from app.db.session import get_session
 from app.forum.models import ForumPost, ForumReply
 from app.forum.service import (
@@ -39,7 +42,7 @@ class ForumReplyCreateRequest(BaseModel):
 class ForumReplyResponse(BaseModel):
     id: int
     body: str
-    author_student_id: str
+    author_id_hash: str
     created_at: datetime
 
 
@@ -49,7 +52,7 @@ class ForumPostResponse(BaseModel):
     title: str
     body: str
     excerpt: str
-    author_student_id: str
+    author_id_hash: str
     replies: int
     created_at: datetime
     updated_at: datetime
@@ -67,11 +70,20 @@ def _excerpt(body: str) -> str:
     return body if len(body) <= 140 else f"{body[:140]}..."
 
 
+def _author_id_hash(student_id: str) -> str:
+    digest = hmac.new(
+        settings.session_token_secret.encode("utf-8"),
+        f"forum-author:{student_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    return digest[:16]
+
+
 def _reply_response(reply: ForumReply) -> ForumReplyResponse:
     return ForumReplyResponse(
         id=reply.id,
         body=reply.body,
-        author_student_id=reply.author_student_id,
+        author_id_hash=_author_id_hash(reply.author_student_id),
         created_at=reply.created_at,
     )
 
@@ -83,7 +95,7 @@ def _post_response(post: ForumPost, *, replies: int) -> ForumPostResponse:
         title=post.title,
         body=post.body,
         excerpt=_excerpt(post.body),
-        author_student_id=post.author_student_id,
+        author_id_hash=_author_id_hash(post.author_student_id),
         replies=replies,
         created_at=post.created_at,
         updated_at=post.updated_at,

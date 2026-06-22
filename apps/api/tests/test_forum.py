@@ -59,6 +59,9 @@ async def test_forum_post_and_reply_http_flow(tmp_path: Path) -> None:
             assert post.status_code == 201
             assert post.json()["slug"] == "strategy-thread"
             assert post.json()["replies"] == 0
+            assert "author_student_id" not in post.json()
+            assert post.json()["author_id_hash"] != "240000201"
+            assert len(post.json()["author_id_hash"]) == 16
 
             reply = client.post(
                 "/forum/strategy-thread/replies",
@@ -66,15 +69,23 @@ async def test_forum_post_and_reply_http_flow(tmp_path: Path) -> None:
                 json={"body": "可以按事件、赔率变化和申诉风险三列记录。"},
             )
             assert reply.status_code == 201
+            assert "author_student_id" not in reply.json()
+            assert reply.json()["author_id_hash"] == post.json()["author_id_hash"]
 
             listing = client.get("/forum")
             assert listing.status_code == 200
             assert listing.json()["posts"][0]["slug"] == "strategy-thread"
             assert listing.json()["posts"][0]["replies"] == 1
+            assert "author_student_id" not in listing.json()["posts"][0]
+            assert listing.json()["posts"][0]["author_id_hash"] == post.json()["author_id_hash"]
 
             detail = client.get("/forum/strategy-thread")
             assert detail.status_code == 200
             assert detail.json()["reply_items"][0]["body"] == "可以按事件、赔率变化和申诉风险三列记录。"
+            assert "author_student_id" not in detail.json()
+            assert "author_student_id" not in detail.json()["reply_items"][0]
+            assert detail.json()["author_id_hash"] == post.json()["author_id_hash"]
+            assert detail.json()["reply_items"][0]["author_id_hash"] == post.json()["author_id_hash"]
     finally:
         app.dependency_overrides.clear()
         await engine.dispose()

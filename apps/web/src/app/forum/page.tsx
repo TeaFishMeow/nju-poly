@@ -15,7 +15,7 @@ type ForumPost = {
   slug: string;
   title: string;
   excerpt: string;
-  author_student_id: string;
+  author_id_hash: string;
   replies: number;
   updated_at: string;
 };
@@ -56,7 +56,7 @@ export default async function ForumPage() {
                       </Link>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{post.excerpt}</p>
                       <div className="mt-3 text-xs text-muted-foreground">
-                        {post.author_student_id} · {new Date(post.updated_at).toLocaleString()}
+                        {post.author_id_hash} · {new Date(post.updated_at).toLocaleString()}
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-3 font-mono text-sm text-muted-foreground">

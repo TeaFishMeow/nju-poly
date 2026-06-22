@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 type ForumReply = {
   id: number;
   body: string;
-  author_student_id: string;
+  author_id_hash: string;
   created_at: string;
 };
 
@@ -22,7 +22,7 @@ type ForumPostDetail = {
   slug: string;
   title: string;
   body: string;
-  author_student_id: string;
+  author_id_hash: string;
   created_at: string;
   reply_items: ForumReply[];
 };
@@ -53,7 +53,7 @@ export default async function ForumPostPage({ params }: { params: Promise<{ slug
         <Card>
           <CardHeader>
             <CardTitle className="font-display text-3xl leading-tight">{post.title}</CardTitle>
-            <div className="text-sm text-muted-foreground">{post.author_student_id} · {new Date(post.created_at).toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">{post.author_id_hash} · {new Date(post.created_at).toLocaleString()}</div>
           </CardHeader>
           <CardContent className="space-y-5">
             <p className="whitespace-pre-wrap leading-7 text-muted-foreground">{post.body}</p>
@@ -68,7 +68,7 @@ export default async function ForumPostPage({ params }: { params: Promise<{ slug
             {post.reply_items.length > 0 ? (
               post.reply_items.map((reply) => (
                 <div key={reply.id} className="rounded-md bg-muted p-3">
-                  <div className="text-sm font-semibold">{reply.author_student_id}</div>
+                  <div className="text-sm font-semibold">{reply.author_id_hash}</div>
                   <div className="mt-1 text-xs text-muted-foreground">{new Date(reply.created_at).toLocaleString()}</div>
                   <div className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{reply.body}</div>
                 </div>

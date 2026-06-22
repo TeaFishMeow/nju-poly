@@ -74,7 +74,7 @@ type AppealListResponse = {
 type ForumReply = {
   id: number;
   body: string;
-  author_student_id: string;
+  author_id_hash: string;
   created_at: string;
 };
 
@@ -83,7 +83,7 @@ type ForumPost = {
   slug: string;
   title: string;
   excerpt: string;
-  author_student_id: string;
+  author_id_hash: string;
   replies: number;
   updated_at: string;
 };
@@ -805,7 +805,7 @@ export default function DashboardPage() {
                           <div className="min-w-0">
                             <div className="font-semibold">{post.title}</div>
                             <div className="mt-1 text-xs text-muted-foreground">
-                              {post.author_student_id} · {new Date(post.updated_at).toLocaleString()}
+                              {post.author_id_hash} · {new Date(post.updated_at).toLocaleString()}
                             </div>
                           </div>
                           <Button size="sm" variant="destructive" onClick={() => deleteForumPost(post.slug)}>
@@ -820,7 +820,7 @@ export default function DashboardPage() {
                               <div key={reply.id} className="grid grid-cols-[1fr_auto] gap-2 rounded-md border p-2 text-sm">
                                 <div className="min-w-0">
                                   <div className="text-xs text-muted-foreground">
-                                    {reply.author_student_id} · {new Date(reply.created_at).toLocaleString()}
+                                    {reply.author_id_hash} · {new Date(reply.created_at).toLocaleString()}
                                   </div>
                                   <div className="mt-1 break-words">{reply.body}</div>
                                 </div>
