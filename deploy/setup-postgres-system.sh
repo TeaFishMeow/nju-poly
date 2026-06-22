@@ -29,14 +29,14 @@ systemctl enable --now postgresql
 
 DB_PASSWORD="$(openssl rand -hex 24)"
 
-if runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" | grep -q 1; then
-  runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "ALTER ROLE \"$DB_USER\" WITH LOGIN PASSWORD '$DB_PASSWORD';" >/dev/null
+if (cd / && runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'") | grep -q 1; then
+  (cd / && runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "ALTER ROLE \"$DB_USER\" WITH LOGIN PASSWORD '$DB_PASSWORD';") >/dev/null
 else
-  runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "CREATE ROLE \"$DB_USER\" WITH LOGIN PASSWORD '$DB_PASSWORD';" >/dev/null
+  (cd / && runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "CREATE ROLE \"$DB_USER\" WITH LOGIN PASSWORD '$DB_PASSWORD';") >/dev/null
 fi
 
-if ! runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" | grep -q 1; then
-  runuser -u postgres -- createdb -O "$DB_USER" "$DB_NAME"
+if ! (cd / && runuser -u postgres -- psql -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'") | grep -q 1; then
+  (cd / && runuser -u postgres -- createdb -O "$DB_USER" "$DB_NAME")
 fi
 
 cd "$ROOT"
