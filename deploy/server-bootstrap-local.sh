@@ -5,7 +5,6 @@ ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 PNPM_VERSION="${PNPM_VERSION:-10.13.1}"
 UV_INSTALLER_URL="${UV_INSTALLER_URL:-https://astral.sh/uv/install.sh}"
 NPM_CONFIG_REGISTRY="${NPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
-UV_INDEX_URL="${UV_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 UV_CONCURRENT_DOWNLOADS="${UV_CONCURRENT_DOWNLOADS:-1}"
 UV_CONCURRENT_BUILDS="${UV_CONCURRENT_BUILDS:-1}"
 UV_CONCURRENT_INSTALLS="${UV_CONCURRENT_INSTALLS:-1}"
@@ -39,10 +38,13 @@ export PNPM_HOME="${PNPM_HOME:-$ROOT/.tools/pnpm-home}"
 export PNPM_STORE_DIR="${PNPM_STORE_DIR:-$ROOT/.pnpm-store}"
 export UV_CACHE_DIR="${UV_CACHE_DIR:-$ROOT/.cache/uv}"
 export UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-$ROOT/.cache/uv-python}"
-export UV_INDEX_URL
 export UV_CONCURRENT_DOWNLOADS
 export UV_CONCURRENT_BUILDS
 export UV_CONCURRENT_INSTALLS
+
+if [ -n "${UV_INDEX_URL:-}" ]; then
+  export UV_INDEX_URL
+fi
 
 pnpm --version
 uv --version

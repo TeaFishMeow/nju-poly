@@ -7,7 +7,9 @@ export PNPM_HOME="$NJUPOLY_ROOT/.tools/pnpm-home"
 export PNPM_STORE_DIR="$NJUPOLY_ROOT/.pnpm-store"
 export UV_CACHE_DIR="$NJUPOLY_ROOT/.cache/uv"
 export UV_PYTHON_INSTALL_DIR="$NJUPOLY_ROOT/.cache/uv-python"
-export UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
 export UV_CONCURRENT_DOWNLOADS=1
 export UV_CONCURRENT_BUILDS=1
 export UV_CONCURRENT_INSTALLS=1
+
+# Optional: set only when the server cannot reach the default Python index.
+# export UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
