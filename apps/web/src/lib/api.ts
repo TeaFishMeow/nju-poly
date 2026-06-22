@@ -1,4 +1,14 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+const DEFAULT_API_BASE_URL = process.env.NODE_ENV === "production" ? "https://polymarket.exnju.top/api" : "http://127.0.0.1:8000";
+
+function normalizeApiBaseUrl(value: string | undefined): string {
+  const cleaned = (value ?? DEFAULT_API_BASE_URL).replace(/^[\uFEFF\u200B-\u200D\u2060]+/, "").trim().replace(/\/+$/, "");
+  if (cleaned.startsWith("http://") || cleaned.startsWith("https://") || cleaned.startsWith("/")) {
+    return cleaned;
+  }
+  return DEFAULT_API_BASE_URL;
+}
+
+export const API_BASE_URL = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 export async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
