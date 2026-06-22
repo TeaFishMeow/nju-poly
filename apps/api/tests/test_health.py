@@ -75,3 +75,12 @@ def test_dashboard_mutations_do_not_reload_entire_dashboard() -> None:
     dashboard = (repo_root / "apps" / "web" / "src" / "app" / "dashboard" / "page.tsx").read_text(encoding="utf-8")
 
     assert "await loadDashboard(token)" not in dashboard
+
+
+def test_dashboard_event_default_close_time_is_24_hours_from_now() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    dashboard = (repo_root / "apps" / "web" / "src" / "app" / "dashboard" / "page.tsx").read_text(encoding="utf-8")
+
+    assert "2030-01-01T20:00" not in dashboard
+    assert "defaultCloseTimeValue" in dashboard
+    assert "closeTime.setHours(closeTime.getHours() + 24)" in dashboard

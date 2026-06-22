@@ -132,6 +132,17 @@ function confirmAction(message: string) {
   return window.confirm(message);
 }
 
+function formatDateTimeLocal(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function defaultCloseTimeValue() {
+  const closeTime = new Date();
+  closeTime.setHours(closeTime.getHours() + 24);
+  return formatDateTimeLocal(closeTime);
+}
+
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const commonT = useTranslations("common");
@@ -152,7 +163,7 @@ export default function DashboardPage() {
   const [eventDescription, setEventDescription] = useState(t("event.defaultDescription"));
   const [eventCriteria, setEventCriteria] = useState(t("event.defaultCriteria"));
   const [eventCategory, setEventCategory] = useState("公告");
-  const [eventCloseTime, setEventCloseTime] = useState("2030-01-01T20:00");
+  const [eventCloseTime, setEventCloseTime] = useState(defaultCloseTimeValue);
   const [newCategory, setNewCategory] = useState("");
   const [settlementSlug, setSettlementSlug] = useState("");
   const [settlementResult, setSettlementResult] = useState<"YES" | "NO">("YES");
