@@ -6,6 +6,10 @@
 !apps/web/.env.local.example
 !apps/web/.env.production.example
 
+ai.md
+DEPLOYMENT.md
+DEVELOPMENT.md
+
 node_modules/
 .pnpm-store/
 .tools/
