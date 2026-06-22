@@ -1,0 +1,20 @@
+{
+  "name": "njupoly",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.13.1",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"pnpm --filter @njupoly/api dev\" \"pnpm --filter @njupoly/web dev\"",
+    "build": "pnpm --filter @njupoly/web build",
+    "codegen": "pnpm --filter @njupoly/shared codegen",
+    "generate-art": "pnpm --filter @njupoly/api generate-art",
+    "verify-art": "pnpm --filter @njupoly/api verify-art",
+    "lint": "pnpm -r lint",
+    "smoke:prod": "node scripts/smoke-production.mjs",
+    "test": "pnpm --filter @njupoly/api test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 31% 98%;
+  --foreground: 216 28% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 216 28% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 216 28% 10%;
+  --primary: 176 68% 27%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 214 27% 92%;
+  --secondary-foreground: 216 28% 10%;
+  --muted: 210 22% 94%;
+  --muted-foreground: 215 13% 42%;
+  --accent: 199 78% 43%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 3 69% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 22% 87%;
+  --input: 214 22% 87%;
+  --ring: 176 68% 27%;
+  --yes: 162 78% 34%;
+  --yes-foreground: 0 0% 100%;
+  --no: 358 68% 52%;
+  --no-foreground: 0 0% 100%;
+  --warning: 37 86% 43%;
+  --warning-foreground: 35 35% 12%;
+  --font-sans: "Inter", "Noto Sans SC";
+  --font-display: "Fraunces", "Noto Serif SC";
+  --font-mono: "IBM Plex Mono", "JetBrains Mono";
+}
+
+.dark {
+  --background: 217 31% 8%;
+  --foreground: 210 29% 96%;
+  --card: 218 27% 12%;
+  --card-foreground: 210 29% 96%;
+  --popover: 218 27% 12%;
+  --popover-foreground: 210 29% 96%;
+  --primary: 170 72% 44%;
+  --primary-foreground: 218 38% 8%;
+  --secondary: 218 20% 18%;
+  --secondary-foreground: 210 29% 96%;
+  --muted: 218 22% 17%;
+  --muted-foreground: 215 17% 70%;
+  --accent: 199 85% 55%;
+  --accent-foreground: 218 38% 8%;
+  --destructive: 2 69% 58%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 218 20% 23%;
+  --input: 218 20% 23%;
+  --ring: 170 72% 44%;
+  --yes: 162 78% 42%;
+  --yes-foreground: 218 38% 8%;
+  --no: 358 75% 62%;
+  --no-foreground: 0 0% 100%;
+  --warning: 40 88% 56%;
+  --warning-foreground: 35 35% 12%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    linear-gradient(180deg, hsl(var(--primary) / 0.08), transparent 280px),
+    linear-gradient(90deg, hsl(var(--accent) / 0.04), transparent 38%),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+  letter-spacing: 0;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.18);
+}

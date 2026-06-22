@@ -1,0 +1,9 @@
+{
+  "logo": {
+    "publicPath": "/brand/njupoly-logo.png",
+    "sourceMediaUrl": "/media/njupoly-logo.png",
+    "prompt": "Use case: logo-brand\nAsset type: NJUPoly website app icon / brand mark\nPrimary request: Generate a polished raster logo mark for 南哪竞猜 NJUPoly, a campus entertainment prediction-market app.\nScene/backdrop: clean flat app-icon composition, no scene.\nSubject: a compact campus gate silhouette fused with a probability trend line and YES/NO market bars.\nStyle/medium: vector-like high-end fintech brand mark rendered as a crisp bitmap.\nComposition/framing: centered square icon, generous padding, works at 40px and 512px.\nLighting/mood: precise, confident, campus-tech.\nColor palette: deep ink, market teal, small campus blue accent.\nText: no text.\nConstraints: no currency symbol, no real-money symbolism, no watermark, no letters, no Chinese characters.\nAvoid: stock exchange tickers, coins, banknotes, mascots, clutter.",
+    "model": "gpt-image-2",
+    "baseUrl": "https://yunwu.ai/v1"
+  }
+}

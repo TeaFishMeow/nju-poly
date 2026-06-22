@@ -1,0 +1,17 @@
+[Unit]
+Description=NJUPoly FastAPI
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=njupoly
+Group=njupoly
+WorkingDirectory=/srv/njupoly
+Environment=NJUPOLY_API_HOST=127.0.0.1
+Environment=NJUPOLY_API_PORT=8000
+ExecStart=/srv/njupoly/deploy/api-start.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

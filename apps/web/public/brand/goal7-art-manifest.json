@@ -1,0 +1,35 @@
+{
+  "logo": "/brand/njupoly-logo.png",
+  "covers": [
+    {
+      "slug": "canteen-window",
+      "coverUrl": "/media/canteen-window.png",
+      "prompt": "Create a clean campus prediction-market cover image for NJUPoly. Category: 校园生活. Title: 南哪食堂本周会推出新窗口吗？. Description: 以任一校内食堂在公告牌或窗口处实际开始售卖新菜系为准。. Use campus notice-board realism, no text, no logos, rectangular web cover."
+    },
+    {
+      "slug": "night-run-300",
+      "coverUrl": "/media/night-run-300.png",
+      "prompt": "Create a clean campus prediction-market cover image for NJUPoly. Category: 活动. Title: 下一次社团夜跑报名会超过 300 人吗？. Description: 以社团公开报名表或活动群公告的最终报名人数为准。. Use campus notice-board realism, no text, no logos, rectangular web cover."
+    },
+    {
+      "slug": "library-late-close",
+      "coverUrl": "/media/library-late-close.png",
+      "prompt": "Create a clean campus prediction-market cover image for NJUPoly. Category: 公告. Title: 本月图书馆闭馆时间会临时延后吗？. Description: 观察本月内图书馆是否发布临时延后闭馆的正式通知。. Use campus notice-board realism, no text, no logos, rectangular web cover."
+    },
+    {
+      "slug": "compiler-quiz",
+      "coverUrl": "/media/compiler-quiz.png",
+      "prompt": "Create a clean campus prediction-market cover image for NJUPoly. Category: 课程. Title: 编译原理小测平均分会超过 82 分吗？. Description: 以课程群公布的全班平均分为准，四舍五入前原始均分超过 82 即为 YES。. Use campus notice-board realism, no text, no logos, rectangular web cover."
+    },
+    {
+      "slug": "goal6-1206602192",
+      "coverUrl": "/media/goal6-1206602192.png",
+      "prompt": "Create a clean campus prediction-market cover image for NJUPoly. Category: ??. Title: Goal 6 HTTP ????. Description: ??????????. Use campus notice-board realism, no text, no logos, rectangular web cover."
+    },
+    {
+      "slug": "goal7-1738674584",
+      "coverUrl": "/media/goal7-1738674584.png",
+      "prompt": "Create a clean campus prediction-market cover image for NJUPoly. Category: goal7-cat-489504351. Title: Goal7 review market. Description: User submitted event. Use campus notice-board realism, no text, no logos, rectangular web cover."
+    }
+  ]
+}
