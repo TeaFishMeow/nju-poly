@@ -41,9 +41,12 @@ except ValidationError as error:
     raise SystemExit("invalid production environment configuration") from None
 
 
+missing_values: list[str] = []
+
+
 def require(name: str, value: str | None) -> None:
-    if not value or value.startswith("REPLACE_") or value.startswith("REPLACE_WITH_"):
-        raise SystemExit(f"missing production value: {name}")
+    if not value or "REPLACE_" in value or "REPLACE_WITH_" in value:
+        missing_values.append(name)
 
 
 require("DATABASE_URL", settings.database_url)
@@ -54,6 +57,9 @@ require("SMTP_USERNAME", settings.smtp_username)
 require("SMTP_PASSWORD", settings.smtp_password)
 require("SMTP_FROM", settings.smtp_from)
 require("IMAGE_MODEL_API_KEY", settings.image_model_api_key)
+
+if missing_values:
+    raise SystemExit("missing production value: " + ", ".join(sorted(missing_values)))
 
 if not settings.database_url.startswith("postgresql+asyncpg://"):
     raise SystemExit("DATABASE_URL must use postgresql+asyncpg:// in production")
