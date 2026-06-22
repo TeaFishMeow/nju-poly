@@ -22,10 +22,23 @@ uv run --frozen python - <<'PY'
 import asyncio
 from urllib.parse import urlsplit
 
+from pydantic_core import ValidationError
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.core.config import settings
+try:
+    from app.core.config import settings
+except ValidationError as error:
+    missing = []
+    for item in error.errors():
+        location = item.get("loc", ())
+        if item.get("type") == "missing" and location:
+            missing.append(str(location[0]).upper())
+
+    if missing:
+        raise SystemExit("missing production value: " + ", ".join(sorted(missing))) from None
+
+    raise SystemExit("invalid production environment configuration") from None
 
 
 def require(name: str, value: str | None) -> None:
