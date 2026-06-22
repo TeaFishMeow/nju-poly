@@ -8,6 +8,8 @@
 
 node_modules/
 .pnpm-store/
+.tools/
+.cache/
 .next/
 out/
 dist/
